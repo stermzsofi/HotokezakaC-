@@ -9,6 +9,6 @@ namespace constants
     const double Omega_m = 0.315;                                   //matter density parameter
     const double Omega_lambda = 0.6847;                             //dark energy density parameter
     const double Omega_r = 3e-4;                                    //radiation density parameter
-
+    const double My_Err = 1e-7;                                     //Error limit to check the equality of two number
 };
 #endif

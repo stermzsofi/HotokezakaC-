@@ -20,17 +20,18 @@ void create_file_for_interpolation::save_data_to_file()
     double a_under_integral_limit = 0.0;
     double a_upper_integral_limit = 0.0;
     std::cout << a_under_integral_limit << "\t" << last_integral_value << std::endl;
-    while(a_upper_integral_limit < 1.0)
+    while(std::abs(1.0-a_upper_integral_limit) > constants::My_Err)
     {
+        a_upper_integral_limit += a_step;
         integral.set_xstart(a_under_integral_limit);
-        if(a_under_integral_limit + a_step > 1.0)
+        if(a_upper_integral_limit > 1.0)
         {
             a_upper_integral_limit = 1.0;
             integral.set_xend(a_upper_integral_limit);
         }
         else
         {
-            a_upper_integral_limit = a_under_integral_limit + a_step;
+            //a_upper_integral_limit = a_under_integral_limit + a_step;
             integral.set_xend(a_upper_integral_limit);
         }
         last_integral_value += integral.qtrap();
