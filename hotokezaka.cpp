@@ -1,33 +1,12 @@
 #include "hotokezaka.hpp"
 
 
-
-/*double rate_to_rate_density(double R, double r_Sun, double rd, double zd)
-{
-    double rho_star, M_star, R_rate_density;
-    rho_star = std::exp(-r_Sun/rd) / (2.0*zd); 
-        //It also include a sigma_d,0 multiplier, but it will falls out
-    M_star = 2.0 * M_PI * rd * rd;
-        //It also include a sigma_d,0 multiplier, but it will falls out
-    R_rate_density = rho_star * R / M_star;
-    return R_rate_density;
-}
-
-double rate_density_to_rate(double R_density, double r_Sun, double rd, double zd)
-{
-    double rho_star, M_star, R_rate;
-    rho_star = std::exp(-r_Sun/rd) / (2.0*zd); 
-        //It also include a sigma_d,0 multiplier, but it will falls out
-    M_star = 2.0 * M_PI * rd * rd;
-        //It also include a sigma_d,0 multiplier, but it will falls out
-    R_rate = R_density * M_star / rho_star;
-}*/
-
 Calculated_Numbers_Based_on_read_in_parameters::Calculated_Numbers_Based_on_read_in_parameters(Read_In_Parameters& params) : param(params)
 {
     //These also include a sigma_d,0 multiplier, but it will falls out
     M_star = 2.0 * M_PI * param.rd * param.rd;
     rho_star = std::exp(-param.r_Sun/param.rd);
+    init();
 }
 double Calculated_Numbers_Based_on_read_in_parameters::rate_density_to_rate(double R_density)
 {
@@ -48,6 +27,56 @@ void Calculated_Numbers_Based_on_read_in_parameters::calculate_number_of_events(
     //eredmény egészre kerekítve beírása number_of_events változóba
 }
 
+
+void Calculated_Numbers_Based_on_read_in_parameters::init()
+{
+    //először: létezik-e fájl idő->z interpolációhoz. ha nem, csináljunk egyet, aztán olvassuk be.
+    if(!std::filesystem::exists("interpolate_table.dat"))
+    {
+        create_file_for_interpolation file;
+        file = create_file_for_interpolation();
+        file.save_data_to_file();
+    }
+    time_to_z_interpolator.init("interpolate_table.dat");
+    //+1: store the time of the universe
+    Time_of_the_Universe = time_to_z_interpolator.genericInterpolationX(1.0);
+    //second: calculate the number of events
+        //simulation_Time -> z_simulation
+        double z_simulation = time_to_z(param.simulation_Time);
+        //integral initialize (set rate, ranges)
+        //integral = Quad_Trapezoidal(*param.rate_function, 0.0, z_simulation);
+        integral.set_newfx(*param.rate_function);
+        //run qtrap and calculate the number_of_events_d
+        //calculate the number_of_events
+    //third: calculate cumulative_distribution function
+        //first: create two vectors
+        //calculate the integral of rate/number_of_events_d and store on the two vectors
+        //initialize the cumulative_distribution_interpolator
+    
+}
+
+double Calculated_Numbers_Based_on_read_in_parameters::time_to_z(double t)
+{
+    //t: this is the lookback time
+    //but I need: t_real. First: need to calculate t_real
+    double t_real = Time_of_the_Universe - t;
+    //this will give back the a value
+    double a = time_to_z_interpolator.genericInterpolationY(t_real);
+    //z can be calculate like this:
+    double z = 1.0/a - 1.0;
+    return z;
+}
+
+double Calculated_Numbers_Based_on_read_in_parameters::z_to_time(double z)
+{
+    //I will need 'a' value for the interpolation
+    double a = 1.0/(z + 1.0);
+    //The interpolation will give back the real time
+    double t_real = time_to_z_interpolator.genericInterpolationX(a);
+    //the lookback time based on it:
+    double t = Time_of_the_Universe - t_real;
+    return t;
+}
 double Fx_for_timeintegral::calc_Fx(double x)
 {
     double denominator = constants::Omega_m /x + constants::Omega_r/(x*x) + constants::Omega_lambda * x * x;
@@ -124,7 +153,7 @@ double WandermanRate::get_rate_density_at_z(double z)
     return rate_density;
 }
 
-double WandermanRate::calc_Fx(double x)
+/*double WandermanRate::calc_Fx(double x)
 {
    return get_rate_density_at_z(x);
-}
+}*/

@@ -5,34 +5,33 @@
 #include <fstream>
 #include <string>
 #include <memory>
+#include <filesystem>
 #include "Trapezoidal_rule/trapezoidal.hpp"
 #include "Linear_interpol/linear_interpol.hpp"
 #include "constant.hpp"
 
-//I need include it to some class later
-//double rate_to_rate_density(double R, double r_Sun, double rd, double zd);
-//double rate_density_to_rate(double R_density, double r_Sun, double rd, double zd);
-
-
-class Rate_density
+/*************************************************************/
+/********DIFFERENT RATE DENSITY FUNCTIONS ********************/
+/*************************************************************/
+class Rate_density : public Fx
 {
     public:
         //virtual double get_rate_density_at_t(double t) = 0;
         virtual double get_rate_density_at_z(double z) = 0;
         void set_r0_rate_density_with_rate_density(double r0);
         virtual void calc_normalize_factor() = 0;
+        double calc_Fx(double x){ return get_rate_density_at_z(x);}
     protected:
         double r0_rate_density;
         double normalize_factor;
 };
 
-class WandermanRate : public Rate_density, public Fx
+class WandermanRate : public Rate_density
 {
     public:
         WandermanRate(double r0);
-        //double get_rate_density_at_t(double t);
         double get_rate_density_at_z(double z);
-        double calc_Fx(double x);
+        //double calc_Fx(double x);
         void calc_normalize_factor();
         //void set_r0_rate_density_with_rate_density(double r0);
         //void set_r0_rate_density_with_rate(double r0);
@@ -86,6 +85,7 @@ class Calculated_Numbers_Based_on_read_in_parameters
         Interpolator cumulative_distribution_interpolator;
         double M_star;
         double rho_star;
+        double Time_of_the_Universe;
         double number_of_events_d;
         int number_of_events;
 };
