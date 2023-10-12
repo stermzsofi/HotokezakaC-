@@ -5,15 +5,15 @@ bool isEqual(double x, double y, double eps)
     return std::abs(x-y) < eps;
 }
 
-void Interpolator::set_kszimax(double kszim)
+/*void Interpolator::set_kszimax(double kszim)
 {
     kszimax = kszim;
-}
+}*/
 
-void Interpolator::set_tmin(double _tmin)
+/*void Interpolator::set_tmin(double _tmin)
 {
     tmin = _tmin;
-}
+}*/
 
 
 void Interpolator::init(std::string InFileName)
@@ -26,10 +26,11 @@ void Interpolator::init(std::string InFileName)
     Infile.read((char*)&x,sizeof(x));
     Infile.read((char*)&Fx,sizeof(Fx));
     Tablenew.push_back(Table_x_Fx{x,Fx});
-    set_kszimax(x);
+    //set_kszimax(x);
     while(!Infile.eof())
     {
         Infile.read((char*)&x,sizeof(x));
+        //if(Infile.eof()) break;
         Infile.read((char*)&Fx,sizeof(Fx));
         Tablenew.push_back(Table_x_Fx{x,Fx});
     }
@@ -37,7 +38,7 @@ void Interpolator::init(std::string InFileName)
 }
 
 
-double Interpolator::interpolateAtX(double t)
+/*double Interpolator::interpolateAtX(double t)
 {
     double x = kszimax * std::pow(t/tmin, -2./3.);
     auto x_1 = std::lower_bound(Tablenew.begin(), Tablenew.end(), x, [] (Table_x_Fx t, double x){return t.x>x;});
@@ -45,20 +46,29 @@ double Interpolator::interpolateAtX(double t)
     if (x_1 == Tablenew.end()) return std::prev(x_1,1)->Fx;
     double F_x = interpolate_linear(x, x_2 ->x,x_1->x, x_2->Fx, x_1->Fx );
     return F_x;
-}
+}*/
 double Interpolator::interpolate_linear(double x, double x1, double x0, double y1, double y0)
 {
     return y0 + (x - x0) * (y1 - y0 ) / (x1 - x0);
 }
 
 
-double Interpolator::genericInterpolation(double x)
+double Interpolator::genericInterpolationX(double x)
 {
     auto x_2 = std::find_if(Tablenew.begin(), Tablenew.end(), [x](Table_x_Fx now){return x <= now.x;});
     if (x_2 == Tablenew.end()) return std::prev(x_2,1)->Fx;
     auto x_1 = std::prev(x_2,1);
     double F_x = interpolate_linear(x, x_2 ->x,x_1->x, x_2->Fx, x_1->Fx );
     return F_x;
+}
+
+double Interpolator::genericInterpolationY(double Fx)
+{
+    auto Fx_2 = std::find_if(Tablenew.begin(), Tablenew.end(), [Fx](Table_x_Fx now){return Fx <= now.Fx;});
+    if (Fx_2 == Tablenew.end()) return std::prev(Fx_2, 1) -> Fx;
+    auto Fx_1 = std::prev(Fx_2,1);
+    double x = interpolate_linear(Fx, Fx_2->Fx, Fx_1-> Fx, Fx_2->x, Fx_1 -> x);
+    return x;
 }
 
 
