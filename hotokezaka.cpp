@@ -185,7 +185,7 @@ void Calculated_Numbers_Based_on_read_in_parameters::init()
     //set r0 rate density at rate function
     param.rate_function->set_r0_rate_density_with_rate_density(rate_to_rate_density(param.r0_rate));
     //param.rate_function->set_r0_rate_density_with_rate_density(param.r0_rate);
-    Ni = 1.0;       //later need to replace some calculations
+    //Ni = 1.0;       //later need to replace some calculations
     //Ni = (Pu/U)0 * NU = 0.4 * (XU * Mej * Msun)/(238 * 1.66e-24 g) = 
     // = 0.4 * YU * Mej * 1.1978e57  = 0.4 * 7.3e-13 * 1.1978e57 * 0.1/R0
     //Ni = 0.4 * 7.3e-13 * 1.1978e57 * 0.1/param.r0_rate; 
@@ -195,6 +195,7 @@ void Calculated_Numbers_Based_on_read_in_parameters::init()
              std::pow(param.vt/7.0, -0.6) * std::pow(param.h_scale/0.2,-0.6);
     //Ni = <ni>m / (rate_density_0 * taui * exp(-taumix/(2*taui)))
     //<ni>m comes from measurements: today Pu value is 6e-17 cm^-3, but we need kpc^-3
+    //To Read_In_Parameters.init function
     Ni = constants::Today_Pu_abundance / (rate_to_rate_density(param.r0_rate) * param.tau * std::exp(-taumix/(2.0*param.tau)));
     Ni = 3.9540983606557375e+49;
     //Ni = 3.540983606557377e+50;
@@ -331,6 +332,8 @@ void create_file_for_interpolation::save_data_to_file()
     myout.close();
 }
 
+/**Rate density functions*/
+
 void Rate_density::set_r0_rate_density_with_rate_density(double r0)
 {
     r0_rate_density = r0;
@@ -395,6 +398,13 @@ void HopkinsRate::calc_normalize_factor()
 {
     normalize_factor = r0_rate_density/(a*h);
 }
+
+/***Ni calculation functions*/
+
+    double Ni_Read_In::calculate_Ni()
+    {
+        return param.Ni;
+    }
 
 Create_events_and_calc_number_density::Create_events_and_calc_number_density(Calculated_Numbers_Based_on_read_in_parameters& calc_par) : calculated_parameters(calc_par)
 {
@@ -467,7 +477,7 @@ void Create_events_and_calc_number_density::calc_number_density_for_an_event()
         if(sampling_time_points[i] <= event.time)
         {
             delta_tj = event.time - sampling_time_points[i];
-            number_density = calculated_parameters.Ni/calc_Kj(delta_tj) * std::exp(const_at_exp/delta_tj - delta_tj/calculated_parameters.param.tau);
+            number_density = calculated_parameters.param.Ni/calc_Kj(delta_tj) * std::exp(const_at_exp/delta_tj - delta_tj/calculated_parameters.param.tau);
             number_densites[i] += number_density;
         }
         else
@@ -523,7 +533,7 @@ void Create_events_and_calc_number_density::allEvent_number_densities()
         double rate_i = calculated_parameters.rate_density_to_rate(rate_dens_i);
         double taumix = 300.0 * std::pow(rate_i/10.0, -0.4) * std::pow(calculated_parameters.param.alpha/0.1,-0.6) * 
              std::pow(calculated_parameters.param.vt/7.0, -0.6) * std::pow(calculated_parameters.param.h_scale/0.2,-0.6);
-        median_number_densities[i] = calculated_parameters.Ni * rate_dens_i * 
+        median_number_densities[i] = calculated_parameters.param.Ni * rate_dens_i * 
                 calculated_parameters.param.tau * std::exp(-taumix/(2.0*calculated_parameters.param.tau));
     }
     for(long unsigned int i = 0; i < median_number_densities.size(); i++)

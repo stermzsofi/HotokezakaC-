@@ -15,6 +15,8 @@
 #include "Linear_interpol/linear_interpol.hpp"
 #include "constant.hpp"
 
+struct Read_In_Parameters;
+
 class Time_redshift
 {
     public:
@@ -76,6 +78,19 @@ class HopkinsRate : public Rate_density
         double a,b,c,d,h;
 };
 
+/*************************************************************/
+/********DIFFERENT NI calculation methods ********************/
+/*************************************************************/
+
+class Ni_calculation
+{
+    public:
+        Ni_calculation(Read_In_Parameters& p): param(p){};
+        virtual double calculate_Ni() = 0;
+    protected:
+        Read_In_Parameters& param;
+};
+
 struct Read_In_Parameters
 {
     //in inputEventGenerator.in at initial code
@@ -93,6 +108,7 @@ struct Read_In_Parameters
     double zd;
     //in tauList.in at initial code
     double tau;     //later could be a vector for more than one tau values
+    double Ni;
     //in intputEventGeneratator.in at initial code
     int number_of_runs;
     std::string read_in_rate_function;
@@ -127,7 +143,7 @@ class Calculated_Numbers_Based_on_read_in_parameters
         double D;       //D=alpha*(vt/7)*(H/0.2)
         //in Myr
         double taumix;  //taumix = 300 (R0/10)^-2/5 * (alpha/0.1)^-3/5*(vt/7)^-3/5*(H/0.2)^-3/5
-        double Ni;
+        //double Ni;
     private:
         //Read_In_Parameters& param;
         Quad_Trapezoidal integral;
