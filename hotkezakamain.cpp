@@ -31,5 +31,9 @@ int main(int argc, char* argv[])
     {
         std::cerr << e.what() << '\n';
     }
+    catch(const char* e)
+    {
+        std::cerr << e << std::endl;
+    }
     return 0;
 }

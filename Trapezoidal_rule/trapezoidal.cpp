@@ -98,7 +98,12 @@
         for (int j = 0; j < JMAX; j++)
         {
             next();
-            if (!std::isfinite(s)) throw("WARNING: S is nan!"); 
+            if (!std::isfinite(s))
+            {
+                n = 0;
+                //std::cout << j << "\t" << olds << std::endl;
+                throw("WARNING: S is nan!");
+            }  
             if(j > 3)
             {
                 if (std::abs(s - olds) < eps * std::abs(olds))

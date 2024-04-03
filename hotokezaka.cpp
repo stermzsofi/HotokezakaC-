@@ -98,6 +98,10 @@ void Read_In_Parameters::init()
     {
         rate_function.reset(new WandermanRate(time_z));
     }
+    else if(read_in_rate_function == "Hopkins")
+    {
+        rate_function.reset(new HopkinsRate(time_z));
+    }
     else
     {
         throw std::runtime_error("Unknown rate function "+read_in_rate_function);
@@ -192,7 +196,8 @@ void Calculated_Numbers_Based_on_read_in_parameters::init()
     //Ni = <ni>m / (rate_density_0 * taui * exp(-taumix/(2*taui)))
     //<ni>m comes from measurements: today Pu value is 6e-17 cm^-3, but we need kpc^-3
     Ni = constants::Today_Pu_abundance / (rate_to_rate_density(param.r0_rate) * param.tau * std::exp(-taumix/(2.0*param.tau)));
-
+    Ni = 3.9540983606557375e+49;
+    //Ni = 3.540983606557377e+50;
     //1e-3: convert 1/Gyr to 1/Myr
     // dimension : kpc^2/Myr
     D = param.alpha * (param.vt / 7.0) * (param.h_scale / 0.2) * 1e-3;
@@ -209,7 +214,10 @@ void Calculated_Numbers_Based_on_read_in_parameters::init()
         integral.set_xstart(0.0);
         //integral.set_xend(z_simulation);
         integral.set_xend(param.simulation_Time);
+        integral.set_n(0);
         //run qtrap and calculate the number_of_events_d
+        std::cout << "Calculating the number of events" << std::endl;
+        std::cout << param.rate_function->calc_Fx(300.0) << std::endl;
         number_of_events_d = integral.qtrap();
         //integral resulted number of events/kpc^3
         //now: need multiple it with the volume of the investigated part
@@ -217,6 +225,7 @@ void Calculated_Numbers_Based_on_read_in_parameters::init()
         //number_of_events_d = rate_density_to_rate(number_of_events_d);
         //calculate the number_of_events
         number_of_events = int(number_of_events_d);
+        std::cout << "The number of events: " << number_of_events_d << std::endl;
     //third: calculate cumulative_distribution function
         //first: create two vectors
         std::vector<double> cumulative_dist_values;
@@ -228,6 +237,7 @@ void Calculated_Numbers_Based_on_read_in_parameters::init()
         sum = 0.0;
         //ezt itt nagyon át kell gondolni: rate vagy rate_density, hogyan is lesz belőle
         //eloszlás fv
+        std::cout << "Started to create cumulative distribution function" << std::endl;
         time_values_for_cumulative_dist.push_back(0.0);
         cumulative_dist_values.push_back(0.0);
         //calculate the integral of rate/number_of_events_d and store on the two vectors
@@ -246,6 +256,7 @@ void Calculated_Numbers_Based_on_read_in_parameters::init()
         }
         //initialize the cumulative_distribution_interpolator
         cumulative_distribution_interpolator.init(cumulative_dist_values, time_values_for_cumulative_dist);
+        std::cout << "Cumulative distribution function done" << std::endl;
 }
 
 double Calculated_Numbers_Based_on_read_in_parameters::interpolate_random_number_to_time(double myrand)
@@ -324,6 +335,7 @@ void Rate_density::set_r0_rate_density_with_rate_density(double r0)
 {
     r0_rate_density = r0;
     calc_normalize_factor();
+    std::cout << "r0_rate_density = " << r0_rate_density << " norm factor = " << normalize_factor << std::endl; 
 }
 
 /*WandermanRate::WandermanRate(double r0)
@@ -355,6 +367,33 @@ double WandermanRate::get_rate_density_at_t(double t)
 {
     double z = time_z.time_to_z(t);
     return get_rate_density_at_z(z);
+}
+
+HopkinsRate::HopkinsRate(Time_redshift& t_z) : time_z(t_z)
+{
+    a = 0.0170;
+    b = 0.13;
+    c = 3.3;
+    d = 5.3;
+    h = constants::H0 / 100.0;
+}
+
+double HopkinsRate::get_rate_density_at_z(double z)
+{
+    double rate_density;
+    rate_density = (a + b*z) * h/(1.0+std::pow(z/c,d)) * normalize_factor;
+    return rate_density;
+}
+
+double HopkinsRate::get_rate_density_at_t(double t)
+{
+    double z = time_z.time_to_z(t);
+    return get_rate_density_at_z(z);
+}
+
+void HopkinsRate::calc_normalize_factor()
+{
+    normalize_factor = r0_rate_density/(a*h);
 }
 
 Create_events_and_calc_number_density::Create_events_and_calc_number_density(Calculated_Numbers_Based_on_read_in_parameters& calc_par) : calculated_parameters(calc_par)
@@ -440,7 +479,7 @@ void Create_events_and_calc_number_density::calc_number_density_for_an_event()
 
 void Create_events_and_calc_number_density::allEvent_number_densities()
 {
-    std::cout << "Started to create and calculate random events" << std::endl;
+    /*std::cout << "Started to create and calculate random events" << std::endl;
     //create number_of_events random event and calculate the number densities
     for(int i = 0; i < calculated_parameters.get_number_of_events(); i++)
     {
@@ -463,6 +502,51 @@ void Create_events_and_calc_number_density::allEvent_number_densities()
     for(long unsigned int i = 0; i < sampling_time_points.size(); i++)
     {
         res << sampling_time_points[i] << "\t" << number_densites[i] << "\t" << median_number_densities[i] << std::endl;
+    }
+    res.close();*/
+    //Create random events and calculate the number density number_of_events times
+    //Output file: first line: times
+    //Second line: median value
+    //After: random examples
+
+    std::ofstream res;
+    res.open("results.dat");
+    for(long unsigned int i = 0; i < sampling_time_points.size(); i++)
+    {
+        res << sampling_time_points[i] << "\t";
+    }
+    res << std::endl;
+    std::cout << "Started to calculate median density" << std::endl;
+    for(long unsigned int i = 0; i < median_number_densities.size(); i++)
+    {
+        double rate_dens_i = calculated_parameters.param.rate_function->get_rate_density_at_t(sampling_time_points[i]);
+        double rate_i = calculated_parameters.rate_density_to_rate(rate_dens_i);
+        double taumix = 300.0 * std::pow(rate_i/10.0, -0.4) * std::pow(calculated_parameters.param.alpha/0.1,-0.6) * 
+             std::pow(calculated_parameters.param.vt/7.0, -0.6) * std::pow(calculated_parameters.param.h_scale/0.2,-0.6);
+        median_number_densities[i] = calculated_parameters.Ni * rate_dens_i * 
+                calculated_parameters.param.tau * std::exp(-taumix/(2.0*calculated_parameters.param.tau));
+    }
+    for(long unsigned int i = 0; i < median_number_densities.size(); i++)
+    {
+        res << median_number_densities[i] << "\t";
+    }
+    res << std::endl;
+    std::cout << "Started to create and calculate random events" << std::endl;
+    for(int i = 0; i < calculated_parameters.param.number_of_runs; i++)
+    {
+        //set all number_densities to 0
+        std::fill(number_densites.begin(), number_densites.end(), 0.0);
+        for(int j = 0; j < calculated_parameters.get_number_of_events(); j++)
+        {
+            calc_number_density_for_an_event();
+        }
+        //write to output file
+        //std::cout << "Write" << std::endl;
+        for(long unsigned int j = 0; j < number_densites.size(); j++)
+        {
+            res << number_densites[j] << "\t";
+        }
+        res << std::endl;
     }
     res.close();
 }

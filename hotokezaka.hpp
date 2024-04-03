@@ -8,7 +8,7 @@
 #include <filesystem>
 #include <algorithm>
 #include <random>
-#include <boost/math/distributions/laplace.hpp>
+//#include <boost/math/distributions/laplace.hpp>
 #include <boost/random/laplace_distribution.hpp>
 //#include <boost/math>
 #include "Trapezoidal_rule/trapezoidal.hpp"
@@ -62,6 +62,18 @@ class WandermanRate : public Rate_density
         //double normalize_factor;    //the rate function at z=0 must return r0 
         //valószínűleg őt is át lesz érdemes vinni Rate_density functionba + ott kell egy virtual 
         // calc_normalize_factor fv is
+};
+
+class HopkinsRate : public Rate_density
+{
+    public:
+        HopkinsRate(Time_redshift& t_z);
+        double get_rate_density_at_z(double z);
+        double get_rate_density_at_t(double t);
+        void calc_normalize_factor();
+    private:
+        Time_redshift& time_z;
+        double a,b,c,d,h;
 };
 
 struct Read_In_Parameters
