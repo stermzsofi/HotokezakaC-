@@ -131,30 +131,4 @@ class Newthon_Raphson
 		int nmax;
 };
 
-//not needed
-/*class Fx_for_Rc : public Fx
-{
-	public:
-		Fx_for_Rc(){}
-		void set_B(double _B) {B = _B;}
-		void set_rw(double _rw) {rw = _rw;}
-		double calc_Fx(double x);
-	private:
-		double B;
-		double rw;
-
-};
-
-class dFx_for_Rc : public dFx
-{
-	public:
-		dFx_for_Rc(){}
-		void set_B(double _B) {B = _B;}
-		void set_rw(double _rw) {rw = _rw;}
-		double calc_dFx(double x);
-	private:
-		double B;
-		double rw;
-};*/
-
 #endif

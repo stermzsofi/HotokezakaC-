@@ -77,7 +77,7 @@
         {
             for (it = 1, j = 1; j < n - 1; j++)
             {
-                it <<=1;    //bit eltolása balra: ha jól gondolom, ezzel adja vissza, hogy hány részre van felolsztva a tartomány
+                it <<=1;    //bit shift toleft
             }
             tnm = it;
             del = (x_end - x_start)/tnm;
@@ -101,7 +101,6 @@
             if (!std::isfinite(s))
             {
                 n = 0;
-                //std::cout << j << "\t" << olds << std::endl;
                 throw("WARNING: S is nan!");
             }  
             if(j > 3)
@@ -109,18 +108,13 @@
                 if (std::abs(s - olds) < eps * std::abs(olds))
                 {
                     n = 0;
-                    //std::cout << "The needed number of j is: " << j << " corresponds to " << std::pow(2,j) << " step. The error is: " << std::abs(s)/std::abs(olds) << std::endl;
                     return s;
                 }
-                //std::cout << "The error is: " << std::abs(s)/std::abs(olds) << std::endl;
             }
-            //if(j < JMAX - 1) 
             olds = s;
         }
         n = 0;
         throw std::runtime_error("ERROR! Too many steps in routine qtrap.");
-        //std::cout << "Too many steps in routine qtrap. The error is: " << std::abs(s)/std::abs(olds) << std::endl;
-        //return s;
     }
 
     /*
@@ -212,14 +206,6 @@
             int_akt = h*(fv ->calc_Fx(x1)+fv ->calc_Fx(x0))/2.0;
             integral += int_akt;
         }
-        /*if(x < x_end + dx)
-        {
-            x0 = x - dx;
-            x1 = x_end;
-            double h = x1-x0;
-            int_akt = h*(fv ->calc_Fx(x1)+fv ->calc_Fx(x0))/2.0;
-            integral += int_akt;
-        }*/
         return integral;
     }
 
@@ -303,18 +289,3 @@
         }
         throw std::runtime_error("ERROR! Too many iteration step need in safe Newton-Raphson method!");
     }
-
-    //Bad functions
-    /*double Fx_for_Rc::calc_Fx(double x)
-    {
-        double f_Rc;
-        f_Rc = B * std::pow(x,-5./6.) * 0.5 - (B * 0.5 * std::pow(rw,-2)* std::pow(x,7./6.)) - 1.0;
-        return f_Rc;
-    }
-
-    double dFx_for_Rc::calc_dFx(double x)
-    {
-        double df_Rc;
-        df_Rc = B * 5./12. * std::pow(x,-11./6.) - B * std::pow(rw, -2) * 7./12. * std::pow(x,1./6.);
-        return df_Rc;
-    }*/
