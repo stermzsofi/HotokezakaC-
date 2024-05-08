@@ -8,6 +8,7 @@
 #include <filesystem>
 #include <algorithm>
 #include <random>
+#include <regex>
 //#include <boost/math/distributions/laplace.hpp>
 #include <boost/random/laplace_distribution.hpp>
 //#include <boost/math>
@@ -15,7 +16,11 @@
 #include "Linear_interpol/linear_interpol.hpp"
 #include "constant.hpp"
 
+bool IsDouble(const std::string& s);
+//void check_argument(int argc, char* argv);
+
 struct Read_In_Parameters;
+class Calculated_Numbers_Based_on_read_in_parameters;
 
 class Time_redshift
 {
@@ -47,36 +52,36 @@ class Rate_density : public Fx
         double normalize_factor;
 };
 
-class WandermanRate : public Rate_density
-{
-    public:
-        WandermanRate(Time_redshift& t_z) : time_z(t_z){};
-        //WandermanRate(double r0);
-        double get_rate_density_at_z(double z);
-        double get_rate_density_at_t(double t);
-        //double calc_Fx(double x);
-        void calc_normalize_factor();
-        //void set_r0_rate_density_with_rate_density(double r0);
-        //void set_r0_rate_density_with_rate(double r0);
-    private:
-        Time_redshift& time_z;
-        //double r0_rate_density;
-        //double normalize_factor;    //the rate function at z=0 must return r0 
-        //valószínűleg őt is át lesz érdemes vinni Rate_density functionba + ott kell egy virtual 
-        // calc_normalize_factor fv is
-};
+    class WandermanRate : public Rate_density
+    {
+        public:
+            WandermanRate(Time_redshift& t_z) : time_z(t_z){};
+            //WandermanRate(double r0);
+            double get_rate_density_at_z(double z);
+            double get_rate_density_at_t(double t);
+            //double calc_Fx(double x);
+            void calc_normalize_factor();
+            //void set_r0_rate_density_with_rate_density(double r0);
+            //void set_r0_rate_density_with_rate(double r0);
+        private:
+            Time_redshift& time_z;
+            //double r0_rate_density;
+            //double normalize_factor;    //the rate function at z=0 must return r0 
+            //valószínűleg őt is át lesz érdemes vinni Rate_density functionba + ott kell egy virtual 
+            // calc_normalize_factor fv is
+    };
 
-class HopkinsRate : public Rate_density
-{
-    public:
-        HopkinsRate(Time_redshift& t_z);
-        double get_rate_density_at_z(double z);
-        double get_rate_density_at_t(double t);
-        void calc_normalize_factor();
-    private:
-        Time_redshift& time_z;
-        double a,b,c,d,h;
-};
+    class HopkinsRate : public Rate_density
+    {
+        public:
+            HopkinsRate(Time_redshift& t_z);
+            double get_rate_density_at_z(double z);
+            double get_rate_density_at_t(double t);
+            void calc_normalize_factor();
+        private:
+            Time_redshift& time_z;
+            double a,b,c,d,h;
+    };
 
 /*************************************************************/
 /********DIFFERENT NI calculation methods ********************/
@@ -85,37 +90,78 @@ class HopkinsRate : public Rate_density
 class Ni_calculation
 {
     public:
-        Ni_calculation(Read_In_Parameters& p): param(p){};
+        Ni_calculation(Calculated_Numbers_Based_on_read_in_parameters& p): calc_param(p){};
         virtual double calculate_Ni() = 0;
     protected:
-        Read_In_Parameters& param;
+        Calculated_Numbers_Based_on_read_in_parameters& calc_param;
+        //Read_In_Parameters& param;
 };
+
+    class Ni_Read_In : public Ni_calculation
+    {
+        public:
+            Ni_Read_In(Calculated_Numbers_Based_on_read_in_parameters& p) : Ni_calculation(p){};
+            double calculate_Ni();
+    };
+
+    class Ni_Measurement : public Ni_calculation
+    {
+        public:
+            Ni_Measurement(Calculated_Numbers_Based_on_read_in_parameters& p) : Ni_calculation(p){};
+            double calculate_Ni();
+            void calculate_N_Pu();
+        private:
+            double N_Pu;
+    };
+
+    class Ni_Hotokezaka : public Ni_calculation
+    {
+        public:
+            Ni_Hotokezaka(Calculated_Numbers_Based_on_read_in_parameters& p) : Ni_calculation(p){};
+            double calculate_Ni();
+    };
+
+/*************************************************************/
+/********Read in parameters struct ***************************/
+/*************************************************************/
 
 struct Read_In_Parameters
 {
+    Read_In_Parameters();
     //in inputEventGenerator.in at initial code
-    double h_scale;
-    double r_Sun;
-    double width;
-    double rd;
-    double simulation_Time;
-    double r0_rate;
-    double sampleDt;
+    double h_scale;                 //ISM scale height in kpc
+    double r_Sun;                   //Solar radius in kpc
+    double width;                   //Width of the solar circle in kpc
+    double rd;                      //Radius scale for galaxy mass distribution in kpc    
+    double simulation_Time;         //Simulation time in Myr
+    double r0_rate;                 //Present-time galactic event rate in number/Myr
+    double sampleDt;                //set the time resolution of the result file in Myr
     //in inputHotokezakaGalaxy.in at initial code
-    double alpha;
-    double vt;
-    //I think we also will need the scaleheight of the disk
+    double alpha;                   //mixing length parameter
+    double vt;                      //typical turbulent velocity in km/s
+    //I think we also will need the scaleheight of the disk - > in Andres method I do not need
     double zd;
     //in tauList.in at initial code
-    double tau;     //later could be a vector for more than one tau values
-    double Ni;
+    //later could be a vector for more than one tau values
+    double tau;                     //mean life of the element in [Myr]    
+    //double Ni;      //inkább a calculated classba mégis
     //in intputEventGeneratator.in at initial code
-    int number_of_runs;
+    int number_of_runs;             //the number of calculated random examples
+    std::string ni_calculation_method;
     std::string read_in_rate_function;
     std::unique_ptr<Rate_density> rate_function; //unique_ptr kell valószínűleg
+    //std::unique_ptr<Ni_calculation> Ni_calc;    //inkább a calculated classba mégis
+
+    //only need it if the ni calculation method is from measurement
+    double element_initial_production_ratio;
+
+    double Pu_initial_production_ratio = 0.4;   //currently nor read from file, later can be
 
     //for time redshift interpolations
     Time_redshift time_z;
+
+    //output filename
+    std::string out_file = "results.dat";
 
     void read_parameter_file(); //Read the values based on parameter file and run init function
     void init();
@@ -124,7 +170,9 @@ struct Read_In_Parameters
         //       not here, in Calculated_Numbers_Based_on_read_in_parameters class
 };
 
-
+/*************************************************************/
+/********Calculated Numbers based on read in parameters*******/
+/*************************************************************/
 
 class Calculated_Numbers_Based_on_read_in_parameters
 {
@@ -143,10 +191,11 @@ class Calculated_Numbers_Based_on_read_in_parameters
         double D;       //D=alpha*(vt/7)*(H/0.2)
         //in Myr
         double taumix;  //taumix = 300 (R0/10)^-2/5 * (alpha/0.1)^-3/5*(vt/7)^-3/5*(H/0.2)^-3/5
-        //double Ni;
+        double Ni;
     private:
         //Read_In_Parameters& param;
         Quad_Trapezoidal integral;
+        std::unique_ptr<Ni_calculation> Ni_calc;
         //Quad_Trapezoidal integrator_for_cumulative_distribution;
         //Interpolator time_to_z_interpolator;
         //Time_redshift& time_z;

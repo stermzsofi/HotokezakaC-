@@ -13,5 +13,6 @@ namespace constants
     const double cm_in_kpc = 3.240779289469756e-22;                 //cm in kpc
     const double cm_m3_in_kpc_m3 = 2.937998946027291e+64;           //cm^-3 in kpc^-3
     const double Today_Pu_abundance = 6e-17 * cm_m3_in_kpc_m3;      //today pu abundance from measuremets in kpc^-3
+    const double tau_Pu = 116.858;                                  //mean life of Pu in Myr
 };
 #endif

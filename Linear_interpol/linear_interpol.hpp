@@ -21,17 +21,10 @@ class Interpolator
 {
     private:
         std::vector<Table_x_Fx> Tablenew;   //The datas
-        //double kszimax, tmin;               //kszimax is the dimensionless radius of the star, tmin is the minimal time
-                                            //kszimax found during the soultion of Lane-Emden equation
-                                            //tmin will set from Parameters struct
         double interpolate_linear(double x, double x1, double x0, double y1, double y0);    //It made the interpolation
     public:
         void init(std::string InFileName);  //uploaded Tablenew data vector from datafile, set kszimax
         void init(std::vector<double> x, std::vector<double> fx);   //uploaded Tablenew data vector from vectors
-        //void set_kszimax(double kszim);
-        //void set_tmin(double _tmin);
-        //double interpolateAtX(double t);        //interpolation for found the value of the integral at a given time
-                                                //uses kszimax and tmin values
         double genericInterpolationX(double x);  //general version of interpolation
         double genericInterpolationY(double Fx);
 };

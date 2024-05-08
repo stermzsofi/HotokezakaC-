@@ -5,17 +5,6 @@ bool isEqual(double x, double y, double eps)
     return std::abs(x-y) < eps;
 }
 
-/*void Interpolator::set_kszimax(double kszim)
-{
-    kszimax = kszim;
-}*/
-
-/*void Interpolator::set_tmin(double _tmin)
-{
-    tmin = _tmin;
-}*/
-
-
 void Interpolator::init(std::string InFileName)
 {
     std::ifstream Infile;
@@ -26,27 +15,15 @@ void Interpolator::init(std::string InFileName)
     Infile.read((char*)&x,sizeof(x));
     Infile.read((char*)&Fx,sizeof(Fx));
     Tablenew.push_back(Table_x_Fx{x,Fx});
-    //set_kszimax(x);
     while(!Infile.eof())
     {
         Infile.read((char*)&x,sizeof(x));
-        //if(Infile.eof()) break;
         Infile.read((char*)&Fx,sizeof(Fx));
         Tablenew.push_back(Table_x_Fx{x,Fx});
     }
     Infile.close();
 }
 
-
-/*double Interpolator::interpolateAtX(double t)
-{
-    double x = kszimax * std::pow(t/tmin, -2./3.);
-    auto x_1 = std::lower_bound(Tablenew.begin(), Tablenew.end(), x, [] (Table_x_Fx t, double x){return t.x>x;});
-    auto x_2 = std::prev(x_1,1);
-    if (x_1 == Tablenew.end()) return std::prev(x_1,1)->Fx;
-    double F_x = interpolate_linear(x, x_2 ->x,x_1->x, x_2->Fx, x_1->Fx );
-    return F_x;
-}*/
 double Interpolator::interpolate_linear(double x, double x1, double x0, double y1, double y0)
 {
     return y0 + (x - x0) * (y1 - y0 ) / (x1 - x0);
