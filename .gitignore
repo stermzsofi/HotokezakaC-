@@ -1,0 +1,10 @@
+*res*.dat
+*.o
+Linear_interpol/*.o
+Trapezoidal_rule/*.o
+*temp*
+*.png
+.vscode/*
+a.out
+*.docx
+
